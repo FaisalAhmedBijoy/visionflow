@@ -69,15 +69,16 @@ class FileSource(BaseSource):
             Frame as numpy array (BGR) or None if file ended
         """
         if self._cap is None or not self._cap.isOpened():
+            self._logger.debug("VideoCapture not initialized or closed")
             return None
 
         ret, frame = self._cap.read()
 
         if not ret:
-            self._logger.info("End of video file reached")
+            self._logger.debug("End of video file reached or failed to read frame")
             return None
 
-        # Control playback speed
+        # Control playback speed (sleep after reading, not before)
         await asyncio.sleep(self._frame_delay)
 
         return frame

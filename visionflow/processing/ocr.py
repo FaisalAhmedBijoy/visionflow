@@ -7,10 +7,12 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 
+from visionflow.processing.base import BaseWorker
+
 logger = logging.getLogger(__name__)
 
 
-class OCRWorker:
+class OCRWorker(BaseWorker):
     """
     OCR (Optical Character Recognition) worker.
 

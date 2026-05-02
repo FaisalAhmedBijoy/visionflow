@@ -1,357 +1,366 @@
-# VisionFlow System Diagram
+# VisionFlow System Architecture Diagrams
 
-## High-Level Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         User Application Layer                          │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │  Pipeline = StreamPipeline()                                       │ │
-│  │  @pipeline.on_event("detection")                                   │ │
-│  │  async def handler(event): ...                                     │ │
-│  │  await pipeline.run()                                              │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     StreamPipeline (Orchestrator)                       │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ Manages:                                                        │   │
-│  │ • Sources lifecycle           • Workers initialization         │   │
-│  │ • Outputs coordination        • Event handling registration    │   │
-│  │ • Frame processing loop       • Error handling                 │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-        │               │               │               │
-        ▼               ▼               ▼               ▼
-    ┌────────┐    ┌─────────┐    ┌────────┐    ┌──────────┐
-    │Ingestion│   │Processing│   │Events  │    │Outputs  │
-    │ Layer  │    │ Layer    │    │System  │    │ Layer   │
-    └────────┘    └─────────┘    └────────┘    └──────────┘
-
-### Ingestion Layer
-
-    RTSPSource              FileSource           (Custom)
-    │                       │                    │
-    └───BaseSource──────────┴────────────────────┘
-            │
-            ├── connect()        ◄── OpenCV / File I/O
-            ├── read_frame()     ◄── Async Frame Reading
-            └── disconnect()     ◄── Cleanup
-
-    Features:
-    • Non-blocking I/O
-    • Frame rate control
-    • Error handling
-    • Extensible architecture
-
-### Processing Layer
-
-    YOLOWorker              OCRWorker            (Custom)
-    │                       │                    │
-    └───BaseWorker──────────┴────────────────────┘
-            │
-            ├── initialize()     ◄── Model Loading
-            ├── process_frame()  ◄── Inference
-            └── cleanup()        ◄── Cleanup
-
-    Grouped into:
-    
-    WorkerPool
-    ├── Concurrent execution
-    ├── Error isolation
-    ├── Results aggregation
-    └── Dynamic management
-
-### Event System
-
-    ┌──────────────┐
-    │   Event      │  (Immutable dataclass)
-    ├──────────────┤
-    │ • event_type │
-    │ • source_id  │
-    │ • timestamp  │
-    │ • data       │
-    │ • event_id   │
-    └──────────────┘
-          │
-          ├─ EventGenerator ──┐
-          │   (Results→Events)│
-          │                   ├─ default_yolo_generator()
-          │                   ├─ default_ocr_generator()
-          │                   └─ custom generators
-          │
-          ▼
-    ┌──────────────────┐
-    │  EventEngine     │  (Async Event Bus)
-    ├──────────────────┤
-    │ • on()           │
-    │ • once()         │
-    │ • off()          │
-    │ • emit()         │
-    │ • clear()        │
-    └──────────────────┘
-          │
-          ▼
-    Registered Handlers (async callbacks)
-          │
-          ├─ Application handlers
-          └─ Output dispatcher
-
-### Output Layer
-
-    LogOutput           WebSocketOutput      RestAPIOutput
-    │                   │                    │
-    ├── Logging         ├── Broadcast        ├── FastAPI Server
-    │   system          │   to clients       │   REST endpoints
-    │                   │                    │   Event storage
-    │
-    KafkaOutput        (Custom)
-    │                  │
-    ├── Kafka topics   └─ Custom implementation
-    │   Pub/Sub
-    │
-    All inherit from:
-    └─ BaseOutput (start, stop, send_event)
-            │
-            ▼
-    OutputDispatcher
-    ├── Manages lifecycle
-    ├── Routes events
-    ├── Error handling
-    └── Dynamic add/remove
-
-## Data Flow Diagram
+## 1. High-Level Component Architecture
 
 ```
-┌─────────────────┐
-│  Video Source   │
-│                 │
-│ RTSP/File/etc   │
-└────────┬────────┘
-         │
-         │ Frame (numpy array)
-         ▼
-┌──────────────────────────┐
-│   StreamPipeline         │
-│   ├─ Ingestion Loop      │
-│   └─ async read_frame()  │
-└──────────┬───────────────┘
-           │
-           │ Raw Frame
-           ▼
-┌──────────────────────────┐
-│   WorkerPool             │
-│   ├─ YOLOWorker         │
-│   │  └─ Inference       │
-│   └─ OCRWorker          │
-│      └─ Text Extract    │
-└──────────┬───────────────┘
-           │
-           │ {"classes": [...], "confidence": [...]}
-           │ {"text": "...", "boxes": [...]}
-           ▼
-┌──────────────────────────┐
-│   EventGenerator         │
-│   (Results → Events)     │
-└──────────┬───────────────┘
-           │
-           │ [Event, Event, Event, ...]
-           ▼
-┌──────────────────────────┐
-│   EventEngine            │
-│   ├─ Emit events        │
-│   └─ Invoke handlers    │
-└──────────┬───────────────┘
-           │
-           ├─────────────────────────────────────┐
-           │                                     │
-           ▼                                     ▼
-    ┌──────────────────┐            ┌──────────────────────┐
-    │ App Handlers     │            │ OutputDispatcher    │
-    │ (@on_event)      │            │                    │
-    │ • Print          │            ├─ LogOutput         │
-    │ • Track stats    │            ├─ WebSocketOutput   │
-    │ • Custom logic   │            ├─ RestAPIOutput     │
-    └──────────────────┘            ├─ KafkaOutput       │
-                                    └─ (Custom)          │
-                                    │                    │
-                                    └────────────────────┘
-                                           │
-                                           ├─ Logs
-                                           ├─ WebSocket Clients
-                                           ├─ REST Consumers
-                                           ├─ Kafka Topics
-                                           └─ Custom Systems
+┌──────────────────────────────────────────────────────────────────┐
+│                     User Application Layer                        │
+│  • Event handlers registration via decorators                    │
+│  • Pipeline configuration and execution                          │
+│  • Custom business logic for detections/results                  │
+└──────────────────────────┬─────────────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────────────┐
+│            StreamPipeline (Core Orchestrator)                    │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ Responsibilities:                                        │   │
+│  │ • Source lifecycle management (connect/disconnect)      │   │
+│  │ • Worker initialization and execution                   │   │
+│  │ • Output dispatcher coordination                        │   │
+│  │ • Event handler registration and execution              │   │
+│  │ • Main frame processing loop                            │   │
+│  │ • Graceful shutdown on errors                           │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└──────────┬──────────────┬──────────────┬──────────────┬──────────┘
+           │              │              │              │
+    ┌──────▼────────┬──────▼────────┬──────▼────────┬──────▼────────┐
+    │              │              │              │              │
+    ▼              ▼              ▼              ▼              ▼
+┌────────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│ Ingestion  │ │Processing│ │  Events  │ │Outputs   │ │Config &  │
+│ Layer      │ │ Layer    │ │ System   │ │ Layer    │ │ CLI      │
+└────────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘
 ```
-
-## Module Dependencies
+## 2. Ingestion Layer Detail
 
 ```
-visionflow/
+BaseSource (Abstract Interface)
 │
-├── __init__.py
-│   └── Exports: StreamPipeline, Event, EventGenerator
+├─ initialize()       OpenCV/File I/O
+├─ read_frame()       Async frame reading
+└─ cleanup()          Resource cleanup
+
+Concrete Implementations:
 │
-├── core/
-│   └── pipeline.py ────────┬─ imports from:
-│                           ├─ events.engine
-│                           ├─ events.generator
-│                           ├─ ingestion.base
-│                           ├─ processing.pool
-│                           └─ outputs.dispatcher
+├─ RTSPSource
+│  ├─ OpenCV video capture from RTSP URIs
+│  ├─ Handles network streams
+│  └─ Connection retry and error handling
 │
-├── events/
-│   ├── event.py ──────── standalone
-│   ├── engine.py ──────┬─ imports:
-│   │                   └─ event.py
-│   └── generator.py ───┬─ imports:
-│                       └─ event.py
+├─ FileSource
+│  ├─ OpenCV video capture from files
+│  ├─ Local MP4, AVI, MOV, MKV support
+│  └─ Frame-by-frame or streaming
 │
-├── ingestion/
-│   ├── base.py ──────── standalone
-│   ├── rtsp.py ────────┬─ imports:
-│   │                   └─ base.py
-│   └── file.py ────────┬─ imports:
-│                       └─ base.py
-│
-├── processing/
-│   ├── base.py ──────── standalone
-│   ├── yolo.py ────────┬─ imports:
-│   │                   └─ base.py
-│   ├── ocr.py ─────────┬─ imports:
-│   │                   └─ base.py
-│   └── pool.py ────────┬─ imports:
-│                       └─ base.py
-│
-├── outputs/
-│   ├── base.py ──────────── standalone
-│   ├── log.py ────────┬─── imports:
-│   │                  ├─── base.py
-│   │                  └─── events.event
-│   ├── websocket.py ──┬─── imports:
-│   │                  ├─── base.py
-│   │                  └─── events.event
-│   ├── api.py ────────┬─── imports:
-│   │                  ├─── base.py
-│   │                  └─── events.event
-│   ├── kafka.py ──────┬─── imports:
-│   │                  ├─── base.py
-│   │                  └─── events.event
-│   └── dispatcher.py ─┬─── imports:
-│                      ├─── base.py
-│                      └─── events.event
-│
-├── config/
-│   └── config.py ────────── standalone (pydantic models)
-│
-├── cli/
-│   └── main.py ───────────┬─ imports:
-│                          ├─ core.pipeline
-│                          ├─ ingestion.*
-│                          ├─ processing.*
-│                          ├─ outputs.*
-│                          └─ config.config
-│
-└── utils/
-    └── __init__.py ──────── standalone utilities
+└─ Custom Sources
+   └─ Inherit from BaseSource for any media source
 ```
 
-## Async Execution Model
+## 3. Processing Layer Detail
 
 ```
-StreamPipeline.run()
+BaseWorker (Abstract Interface)
 │
-├─ await pipeline.start()
-│  ├─ await asyncio.gather(source.start() for source in sources)
-│  ├─ await worker_pool.start()
+├─ initialize()       Load model/resources
+├─ process_frame()    Run inference
+└─ cleanup()          Release resources
+
+Concrete Implementations:
+│
+├─ YOLOWorker
+│  ├─ Ultralytics YOLO v8 object detection
+│  ├─ Detects objects with bounding boxes
+│  └─ Configurable model sizes (nano→xlarge)
+│
+├─ OCRWorker
+│  ├─ Tesseract text recognition
+│  ├─ Extracts text from frame regions
+│  └─ Multi-language support
+│
+└─ Custom Workers
+   └─ Inherit from BaseWorker for any ML model
+
+WorkerPool Orchestration:
+│
+├─ Manages multiple workers
+├─ Parallel frame processing
+├─ Error isolation per worker
+└─ Result aggregation
+```
+
+## 4. Event System Detail
+
+```
+Event (Immutable Dataclass)
+├─ event_type      Type of event (detection, ocr_result, custom)
+├─ source_id       Which source generated it
+├─ timestamp       When event occurred
+├─ data           Event payload
+├─ metadata       Additional context
+└─ event_id       Unique identifier
+
+            ↓
+
+EventGenerator (Factory)
+├─ default_yolo_generator()      Convert detections → Event
+├─ default_ocr_generator()       Convert text → Event
+└─ register_generator()          Custom event types
+
+            ↓
+
+EventEngine (Async Pub/Sub Bus)
+├─ on(event_type, handler)      Register listener
+├─ once(event_type, handler)    One-time listener
+├─ emit(event)                  Broadcast to handlers
+└─ clear()                       Cleanup
+
+            ↓
+
+Handlers (Async Callbacks)
+├─ Application handlers (@on_event decorator)
+└─ Output dispatcher (multi-output routing)
+```
+
+## 5. Output Layer Detail
+
+```
+BaseOutput (Abstract Interface)
+│
+├─ start()          Initialize output
+├─ send_event()     Process event
+└─ stop()           Cleanup
+
+Concrete Implementations:
+│
+├─ LogOutput
+│  └─ Python logging framework
+│
+├─ WebSocketOutput
+│  ├─ Real-time WebSocket broadcast
+│  └─ Multiple client support
+│
+├─ RestAPIOutput
+│  ├─ FastAPI server with endpoints
+│  ├─ Event history storage
+│  └─ Swagger documentation
+│
+├─ KafkaOutput
+│  ├─ Apache Kafka topic publishing
+│  └─ Enterprise streaming
+│
+└─ Custom Outputs
+   └─ Inherit from BaseOutput
+
+OutputDispatcher (Router):
+├─ Manages multiple outputs
+├─ Concurrent event dispatch
+├─ Error isolation per output
+└─ Dynamic add/remove of outputs
+```
+
+## 6. Complete Data Flow
+
+```
+┌─────────────────────────────────────┐
+│  Video/Media Input                  │
+│  • File (MP4, AVI, MOV)             │
+│  • RTSP Stream (IP cameras)         │
+│  • Custom Source                    │
+└──────────────┬──────────────────────┘
+               │ raw frame (numpy array, BGR)
+               ▼
+┌──────────────────────────────────────┐
+│  StreamPipeline                      │
+│  ├─ Coordinates all components      │
+│  └─ Main event loop                 │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────┐
+│  Source.read_frame()                │
+│  (Async frame acquisition)           │
+└──────────────┬──────────────────────┘
+               │ frame (H×W×3)
+               ▼
+┌──────────────────────────────────────┐
+│  WorkerPool.process_frame()          │
+│  (Parallel processing)               │
+│  ├─ YOLOWorker → detections         │
+│  ├─ OCRWorker → text                 │
+│  └─ Custom → custom results          │
+└──────────────┬──────────────────────┘
+               │ {"yolo": [...], "ocr": [...]}
+               ▼
+┌──────────────────────────────────────┐
+│  EventGenerator.generate_events()    │
+│  (Convert results to events)         │
+└──────────────┬──────────────────────┘
+               │ [Event(...), Event(...), ...]
+               ▼
+┌──────────────────────────────────────┐
+│  EventEngine.emit()                  │
+│  (Async pub/sub broadcast)           │
+└──────────┬──────────────────────┬────┘
+           │                      │
+    ┌──────▼──────────┐    ┌─────▼──────────────┐
+    │ App Handlers    │    │ OutputDispatcher   │
+    │                 │    │                    │
+    │ @on_event       │    ├─ LogOutput        │
+    │ • Custom logic  │    ├─ WebSocketOutput  │
+    │ • Stats track   │    ├─ RestAPIOutput    │
+    │ • Filtering     │    ├─ KafkaOutput      │
+    └──────┬──────────┘    └─────┬──────────────┘
+           │                      │
+           │        ┌─────────────┼─────────────┐
+           │        │             │             │
+           ▼        ▼             ▼             ▼
+      Application  Console   WebSocket      REST API
+      Logic        Logs      Clients        Endpoints
+                                │             │
+                                └─────┬───────┘
+                                      ▼
+                            External Systems
+                            • Dashboards
+                            • Analytics
+                            • Webhooks
+                            • Databases
+```
+
+## 7. Module Dependencies
+
+```
+Dependency Graph (bottom → top):
+
+events/
+├── event.py                    (no dependencies)
+├── engine.py → event.py
+└── generator.py → event.py
+
+ingestion/
+├── base.py                     (no dependencies)
+├── file.py → base.py
+└── rtsp.py → base.py
+
+processing/
+├── base.py                     (no dependencies)
+├── yolo.py → base.py
+├── ocr.py → base.py
+└── pool.py → base.py
+
+outputs/
+├── base.py                     (no dependencies)
+├── log.py → base.py, event.py
+├── websocket.py → base.py, event.py
+├── api.py → base.py, event.py
+├── kafka.py → base.py, event.py
+└── dispatcher.py → base.py, event.py
+
+config/
+└── config.py                   (pydantic only)
+
+core/
+└── pipeline.py → events/*, ingestion/*, processing/*, outputs/*, config/
+
+cli/
+└── main.py → core/*, ingestion/*, processing/*, outputs/*, config/
+
+Key Points:
+✓ No circular dependencies
+✓ Base classes have no dependencies
+✓ Clear layering from bottom to top
+✓ Easy to test in isolation
+```
+
+## 8. Async Execution Model
+
+```
+await pipeline.run()
+│
+├─ await _initialize()
+│  ├─ await gather(source.connect() for each source)
+│  ├─ await worker_pool.initialize()
 │  └─ await output_dispatcher.start()
 │
-├─ for source in sources:
-│  └─ create_task(_run_source(source))
-│     │
-│     └─ while pipeline.is_running:
-│        ├─ frame = await source.read_frame()
-│        └─ await process_frame(frame, source_id)
-│           │
-│           ├─ worker_results = await worker_pool.process_frame(frame)
-│           │  │
-│           │  └─ await asyncio.gather(
-│           │       worker.process_frame() for worker in workers
-│           │     )
-│           │
-│           ├─ for worker_id, results in worker_results.items():
-│           │  ├─ events = event_generator.generate(...)
-│           │  │
-│           │  └─ for event in events:
-│           │     ├─ await event_engine.emit(event)
-│           │     │  │
-│           │     │  └─ await asyncio.gather(
-│           │     │       handler(event) for handler in handlers
-│           │     │     )
-│           │     │
-│           │     └─ await output_dispatcher.dispatch(event)
-│           │        │
-│           │        └─ await asyncio.gather(
-│           │             output.send_event(event) for output in outputs
-│           │           )
+├─ for each source:
+│  └─ create_task(_source_loop(source))
 │
-└─ await pipeline.stop()
-   ├─ cancel all tasks
-   ├─ await source.stop()
-   ├─ await worker_pool.stop()
-   └─ await output_dispatcher.stop()
+└─ while pipeline.is_running:
+   │
+   ├─ source.read_frame() → frame (or None at EOF)
+   │
+   ├─ worker_pool.process_frame(frame)
+   │  │
+   │  └─ gather(worker.process_frame(frame) for each worker)
+   │     │
+   │     ├─ YOLOWorker: detections
+   │     ├─ OCRWorker: text
+   │     └─ Custom: any results
+   │
+   ├─ event_generator.generate_events(results)
+   │  │
+   │  └─ [Event(...), Event(...), ...]
+   │
+   └─ for each event:
+      │
+      ├─ event_engine.emit(event)
+      │  │
+      │  └─ gather(handler(event) for each registered handler)
+      │     │
+      │     ├─ @on_event("detection") handlers
+      │     ├─ @on_event("ocr_result") handlers
+      │     └─ Output dispatcher
+      │
+      └─ output_dispatcher.dispatch(event)
+         │
+         └─ gather(output.send_event(event) for each output)
+            │
+            ├─ log.send_event()
+            ├─ websocket.send_event()
+            ├─ api.send_event()
+            ├─ kafka.send_event()
+            └─ custom.send_event()
 ```
 
-## Configuration Flow
-
-```
-User: visionflow run config.yaml
-│
-├─ load_config("config.yaml")
-│  └─ Parse YAML → PipelineConfig (Pydantic)
-│     └─ Validate types and structure
-│
-├─ Create StreamPipeline()
-│
-├─ For each SourceConfig:
-│  └─ Create RTSPSource or FileSource
-│     └─ pipeline.add_source()
-│
-├─ For each WorkerConfig:
-│  └─ Create YOLOWorker or OCRWorker
-│     └─ pipeline.worker_pool = WorkerPool(workers)
-│
-├─ For each OutputConfig:
-│  └─ Create LogOutput, RestAPIOutput, etc.
-│     └─ pipeline.add_output()
-│
-├─ Register event handlers
-│
-└─ await pipeline.run()
-   └─ Full pipeline execution
-```
-
-## Error Handling Strategy
+## 9. Error Isolation Strategy
 
 ```
 Pipeline Execution
 │
-├─ Source Error
-│  └─ Log error → Stop source → Continue with other sources
+├─ [Source Loop]
+│  ├─ If source.read_frame() fails
+│  │  └─ Log error, continue (frame = None, triggers EOF)
+│  │
+│  └─ If source connection lost
+│     └─ Retry connection, log status
 │
-├─ Worker Error (during inference)
-│  └─ Log error → Skip event generation → Continue
+├─ [Worker Processing]
+│  ├─ If worker.process_frame() raises exception
+│  │  └─ Catch in try/except → Log → Continue
+│  │     (Other workers still process)
+│  │
+│  └─ If worker.initialize() fails
+│     └─ Mark worker as unavailable → Skip
 │
-├─ Event Handler Error
-│  └─ Log error → Continue with other handlers
+├─ [Event Handling]
+│  ├─ If handler(event) raises exception
+│  │  └─ Catch → Log → Continue
+│  │     (Other handlers still execute)
+│  │
+│  └─ If event_generator fails
+│     └─ Log error → Skip event generation
 │
-├─ Output Error
-│  └─ Log error → Remove from dispatcher → Continue with others
+├─ [Output Dispatch]
+│  ├─ If output.send_event() raises exception
+│  │  └─ Catch → Log → Continue
+│  │     (Other outputs still process)
+│  │
+│  └─ If output.start() fails
+│     └─ Mark as unavailable → Skip
 │
-└─ Pipeline Error
-   └─ Log error → Cleanup and exit
+└─ [Pipeline Shutdown]
+   ├─ Graceful: Cancel tasks, cleanup resources
+   └─ Ungraceful: Log error, forced cleanup
 ```
 
 This visual diagram provides complete understanding of VisionFlow's architecture!

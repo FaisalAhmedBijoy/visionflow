@@ -3,7 +3,7 @@ Event class definitions.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 from uuid import UUID, uuid4
 
@@ -25,7 +25,7 @@ class Event:
     event_type: str
     source_id: str
     data: Dict[str, Any]
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
     event_id: UUID = field(default_factory=uuid4)
     metadata: Dict[str, Any] = field(default_factory=dict)
 

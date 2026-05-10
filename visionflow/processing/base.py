@@ -84,3 +84,11 @@ class BaseWorker(ABC):
         except Exception as e:
             self._logger.error(f"Error stopping worker {self.worker_id}: {e}", exc_info=True)
             raise
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"worker_id={self.worker_id!r}, "
+            f"model_name={self.model_name!r}, "
+            f"is_running={self.is_running})"
+        )

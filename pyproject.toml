@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "visionflow"
-version = "0.1.0"
+version = "0.2.0"
 description = "Event-driven, real-time AI video stream processing framework"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,10 +12,11 @@ license = {text = "Apache-2.0"}
 authors = [
     {name = "VisionFlow Contributors"},
 ]
-keywords = ["video", "streaming", "AI", "YOLO", "OCR", "event-driven", "real-time"]
+keywords = ["video", "streaming", "AI", "YOLO", "OCR", "event-driven", "real-time", "computer-vision"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -24,6 +25,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Multimedia :: Video",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
 
 dependencies = [
@@ -34,17 +36,24 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "numpy>=1.24.0",
     "aiofiles>=23.2.0",
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
     "pyyaml>=6.0",
     "python-multipart>=0.0.6",
+    "click>=8.1.0",
 ]
 
 [project.optional-dependencies]
 yolo = ["ultralytics>=8.0.0"]
 ocr = ["pytesseract>=0.3.10", "pillow>=10.0.0"]
 kafka = ["kafka-python>=2.0.2"]
+mqtt = ["paho-mqtt>=1.6.1"]
 livekit = ["livekit>=0.8.0"]
+all = [
+    "ultralytics>=8.0.0",
+    "pytesseract>=0.3.10",
+    "pillow>=10.0.0",
+    "kafka-python>=2.0.2",
+    "paho-mqtt>=1.6.1",
+]
 dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
@@ -55,20 +64,30 @@ dev = [
     "mypy>=1.5.0",
     "sphinx>=7.0.0",
     "sphinx-rtd-theme>=1.3.0",
+    "types-pyyaml>=6.0.0",
+    "types-aiofiles>=23.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/FaisalAhmedBijoy/visionflow"
+Repository = "https://github.com/FaisalAhmedBijoy/visionflow"
+Documentation = "https://github.com/FaisalAhmedBijoy/visionflow/tree/main/docs"
+"Bug Tracker" = "https://github.com/FaisalAhmedBijoy/visionflow/issues"
+Changelog = "https://github.com/FaisalAhmedBijoy/visionflow/blob/main/CHANGELOG.md"
 
 [project.scripts]
 visionflow = "visionflow.cli.main:main"
 
-[tool.setuptools]
-packages = ["visionflow"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["visionflow*"]
 
 [tool.setuptools.package-data]
 visionflow = ["py.typed"]
 
 [tool.black]
 line-length = 100
-target-version = ["py310"]
+target-version = ["py310", "py311", "py312"]
 
 [tool.isort]
 profile = "black"
@@ -80,7 +99,21 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 check_untyped_defs = true
+no_implicit_reexport = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["visionflow"]
+omit = ["tests/*", "setup_dev.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

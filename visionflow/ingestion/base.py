@@ -14,6 +14,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+
 class BaseSource(ABC):
     """
     Abstract base class for video stream sources.
@@ -80,3 +81,11 @@ class BaseSource(ABC):
         except Exception as e:
             self._logger.error(f"Error stopping source {self.source_id}: {e}", exc_info=True)
             raise
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"source_id={self.source_id!r}, "
+            f"fps={self.fps}, "
+            f"is_running={self.is_running})"
+        )

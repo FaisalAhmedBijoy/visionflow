@@ -4,73 +4,72 @@
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
-[![Type Hints: 100%](https://img.shields.io/badge/Type%20Hints-100%25-brightgreen)](https://docs.python.org/3/library/typing.html)
+[![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Type Hints](https://img.shields.io/badge/Type%20Hints-100%25-brightgreen)](#)
 
-**Real-time AI video stream processing framework with event-driven architecture**
+**Event-driven real-time AI video stream processing framework**
 
-[Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Contributing](#contributing)
+[Features](#features) • [Installation](#installation) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Contributing](#contributing)
 
 </div>
-
----
 
 ## Overview
 
 VisionFlow is a production-ready Python framework for building scalable, event-driven real-time video AI applications. It provides a clean abstraction layer for video ingestion, AI model inference, and multi-channel event distribution with full async/await support.
 
-Perfect for building:
-- **Video surveillance systems** with object detection and tracking
-- **Live stream analytics** pipelines
-- **Computer vision applications** requiring real-time processing
-- **IoT video processing** solutions
-- **Enterprise video analysis** platforms
+### Use Cases
+- Video surveillance with object detection and tracking
+- Live stream analytics and monitoring
+- Real-time computer vision applications
+- IoT video processing at the edge
+- Enterprise video analysis platforms
 
-## Features
+## Key Features
 
-### Core Capabilities
-- **Multi-Source Video Ingestion** - RTSP streams, local files, custom sources
-- **Parallel AI Processing** - Concurrent YOLO detection, OCR, and custom models
-- **Event-Driven Architecture** - Async pub/sub system with handler registration
-- **Multi-Channel Output** - REST API, WebSocket, Kafka, logging, custom outputs
-- **Type-Safe & Async** - 100% type hints, full asyncio support throughout
-- **Production-Grade** - Comprehensive error handling, structured logging, extensive testing
+- **Multi-Source Ingestion** – RTSP streams, local files, and custom sources
+- **Parallel AI Processing** – Concurrent YOLO detection, OCR, and custom models
+- **Event-Driven Architecture** – Async pub/sub system with declarative handlers
+- **Multi-Channel Output** – REST API, WebSocket, Kafka, file, and custom outputs
+- **Fully Typed** – 100% type hints for IDE autocomplete and static analysis
+- **Async-First** – Full asyncio support throughout the entire framework
+- **Production-Ready** – Comprehensive error handling, structured logging, and extensive testing
+- **Extensible** – Custom sources, workers, and outputs via simple inheritance
+- **YAML Configuration** – Declarative pipeline configuration with Pydantic validation
+## Installation
 
-### Built-In Capabilities
-- YOLO v8 object detection (nano to xlarge)
-- Tesseract OCR text recognition
-- FastAPI REST API with Swagger documentation
-- Real-time WebSocket broadcast
-- Apache Kafka message publishing
-- YAML + Pydantic configuration management
-- CLI for pipeline execution
-- Worker pool for parallel inference
-## Quick Start
-
-### Installation
+### From PyPI
 
 ```bash
 # Core installation
-pip install visionflow
+pip install visionflow-ai
 
-# With YOLO object detection support
-pip install visionflow[yolo]
+# With YOLO object detection
+pip install visionflow-ai[yolo]
 
-# With OCR text recognition support
-pip install visionflow[ocr]
+# With OCR text recognition
+pip install visionflow-ai[ocr]
 
 # With Apache Kafka integration
-pip install visionflow[kafka]
+pip install visionflow-ai[kafka]
 
-# All optional features
-pip install visionflow[yolo,ocr,kafka]
+# All optional dependencies
+pip install visionflow-ai[yolo,ocr,kafka]
 
-# Development setup
-pip install visionflow[dev]
+# Development tools
+pip install visionflow-ai[dev]
 ```
 
-### Basic Usage
+### From Source
+
+```bash
+git clone https://github.com/FaisalAhmedBijoy/visionflow.git
+cd visionflow
+pip install -e ".[dev,yolo,ocr,kafka]"
+```
+
+## Quick Start
+
+### Basic Example
 
 ```python
 import asyncio
@@ -81,44 +80,41 @@ from visionflow.processing.pool import WorkerPool
 from visionflow.outputs.log import LogOutput
 
 async def main():
-    # Create pipeline
     pipeline = StreamPipeline()
     
     # Add video source
-    pipeline.add_source(FileSource("video.mp4", source_id="camera_1"))
+    pipeline.add_source(FileSource("video.mp4", source_id="main_camera"))
     
-    # Add YOLO detector
-    pipeline.worker_pool = WorkerPool([YOLOWorker("detector", "yolov8n.pt")])
+    # Configure AI workers
+    pipeline.worker_pool = WorkerPool([
+        YOLOWorker("detector", model="yolov8n.pt")
+    ])
     
-    # Add logging output
+    # Add output handler
     pipeline.add_output(LogOutput())
     
-    # Register event handler
-    @pipeline.on_event("person_detected")
-    async def on_person(event):
-        print(f"Person detected: {event.data}")
+    # Handle events
+    @pipeline.on_event("detection")
+    async def on_detection(event):
+        print(f"Detected: {event.data}")
     
-    # Run pipeline
     await pipeline.run()
-
-if __name__ == "__main__":
-    asyncio.run(main())
 ```
 
-### Using Configuration File
+### Configuration-Driven Usage
 
-Create a `config.yaml`:
+Create `pipeline.yaml`:
 
 ```yaml
-name: "Vision Pipeline"
+name: "Real-Time Video Analysis"
 
 sources:
-  - id: "rtsp_camera"
+  - id: "main_camera"
     type: "rtsp"
     url: "rtsp://camera.local/stream"
     fps: 30
   
-  - id: "video_file"
+  - id: "backup_file"
     type: "file"
     url: "video.mp4"
     fps: 30
@@ -131,48 +127,54 @@ workers:
   
   - id: "ocr"
     type: "ocr"
-    enabled: false
+    enabled: true
 
 outputs:
   - id: "logger"
     type: "log"
     enabled: true
   
-  - id: "rest_api"
+  - id: "api"
     type: "rest_api"
     host: "0.0.0.0"
     port: 8000
     enabled: true
+  
+  - id: "events_kafka"
+    type: "kafka"
+    broker: "localhost:9092"
+    topic: "video_events"
+    enabled: false
 
 log_level: "INFO"
 debug: false
 ```
 
-Run the pipeline:
+Run with configuration:
 
 ```bash
-visionflow run config.yaml
+visionflow run pipeline.yaml
 ```
 
 ## Architecture
 
-VisionFlow follows a layered, event-driven architecture designed for extensibility and testability.
+VisionFlow follows a layered, event-driven architecture designed for scalability, extensibility, and testability.
 
-### System Architecture
+### System Design
 
 ```
-┌─────────────────────────────────────────────────┐
-│           User Application                      │
-└─────────────────┬───────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│        User Application Layer               │
+└─────────────────┬───────────────────────────┘
                   │
-┌─────────────────▼───────────────────────────────┐
-│      StreamPipeline (Core Orchestrator)         │
-├──────────┬──────────────┬──────────┬────────────┤
-│Ingestion │ Processing   │ Events   │ Outputs    │
-│ • RTSP   │ • YOLO       │ • Bus    │ • REST API │
-│ • File   │ • OCR        │ • Event  │ • WebSocket│
-│ • Custom │ • Pool       │ • Handler│ • Kafka    │
-└──────────┴──────────────┴──────────┴────────────┘
+┌─────────────────▼───────────────────────────┐
+│      StreamPipeline (Orchestrator)          │
+├──────────┬───────────┬──────────┬───────────┤
+│Ingestion │Processing │  Events  │  Outputs  │
+│ • RTSP   │  • YOLO   │  • Bus   │ • REST    │
+│ • File   │  • OCR    │  • Emit  │ • WS      │
+│ • Custom │  • Custom │  • Sub   │ • Kafka   │
+└──────────┴───────────┴──────────┴───────────┘
                   │
          ┌────────▼────────┐
          │  External       │
@@ -180,20 +182,53 @@ VisionFlow follows a layered, event-driven architecture designed for extensibili
          └─────────────────┘
 ```
 
-### Core Components
+### Core Modules
 
-| Component | Purpose | Implementations |
-|-----------|---------|-----------------|
-| **Ingestion** | Video source abstraction | RTSP, File, Custom |
-| **Processing** | AI model execution | YOLO, OCR, Custom models |
-| **Events** | Async pub/sub system | Event, EventEngine, EventGenerator |
-| **Outputs** | Event distribution | REST API, WebSocket, Kafka, Logging |
-| **Configuration** | Settings management | YAML + Pydantic |
-| **CLI** | Command-line interface | visionflow run/init |
-
-For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+| Module | Purpose | Implementations |
+|--------|---------|-----------------|
+| **Ingestion** | Video source abstraction | RTSP, File, Webcam, Custom |
+| **Processing** | AI model execution | YOLO, OCR, Custom |
+| **Events** | Async pub/sub messaging | Event, EventEngine, EventGenerator |
+| **Outputs** | Event distribution | REST API, WebSocket, Kafka, File, Logging |
+| **Config** | Settings management | YAML + Pydantic validation |
+| **CLI** | Command-line interface | Configuration, execution, debugging |
 
 ## API Reference
+
+### Stream Pipeline
+
+```python
+from visionflow import StreamPipeline
+from visionflow.ingestion import RTSPSource, FileSource
+from visionflow.processing.yolo import YOLOWorker
+from visionflow.processing.pool import WorkerPool
+from visionflow.outputs import RestAPIOutput, WebSocketOutput
+
+# Initialize pipeline
+pipeline = StreamPipeline(name="MyPipeline", debug=True)
+
+# Add video sources (multiple supported)
+pipeline.add_source(RTSPSource("rtsp://camera/stream", source_id="cam1"))
+pipeline.add_source(FileSource("video.mp4", source_id="file1"))
+
+# Configure worker pool for parallel inference
+pipeline.worker_pool = WorkerPool([
+    YOLOWorker("detector", model="yolov8m.pt")
+])
+
+# Add output handlers
+pipeline.add_output(RestAPIOutput(host="0.0.0.0", port=8000))
+pipeline.add_output(WebSocketOutput(port=8001))
+
+# Register event handlers
+@pipeline.on_event("detection")
+async def handle_detection(event):
+    """Process detection events."""
+    print(f"Objects detected: {event.data}")
+
+# Run the pipeline
+await pipeline.run()
+```
 
 ### Event System
 
@@ -205,181 +240,108 @@ event = Event(
     event_type="person_detected",
     source_id="camera_1",
     data={"class": "person", "confidence": 0.95},
-    metadata={"frame_id": 123}
+    metadata={"frame_id": 123, "timestamp": 1234567890}
 )
 
 # Register event handlers with decorators
 @pipeline.on_event("person_detected")
-async def handle_detection(event):
+async def on_person(event: Event) -> None:
     print(f"Event: {event.event_type}")
     print(f"Data: {event.data}")
-
-# Or register manually
-async def my_handler(event):
-    pass
-
-pipeline.event_engine.on("person_detected", my_handler)
+    print(f"Source: {event.source_id}")
 ```
 
-### Pipeline API
+### Custom Components
 
-```python
-from visionflow import StreamPipeline
-from visionflow.ingestion import RTSPSource, FileSource
-from visionflow.processing.yolo import YOLOWorker
-from visionflow.processing.pool import WorkerPool
-from visionflow.outputs import RestAPIOutput, WebSocketOutput
+Extend VisionFlow with custom implementations:
 
-# Create pipeline
-pipeline = StreamPipeline()
-
-# Add sources (multiple sources supported)
-pipeline.add_source(RTSPSource("rtsp://camera/stream", "cam1"))
-pipeline.add_source(FileSource("video.mp4", "file1"))
-
-# Configure workers
-pipeline.worker_pool = WorkerPool([
-    YOLOWorker("detector", "yolov8n.pt")
-])
-
-# Add outputs
-pipeline.add_output(RestAPIOutput(host="0.0.0.0", port=8000))
-pipeline.add_output(WebSocketOutput())
-
-# Register handlers
-@pipeline.on_event("detection")
-async def handle_detection(event):
-    # Custom logic
-    pass
-
-# Run pipeline
-await pipeline.run()
-```
-
-### Workers
-
-```python
-from visionflow.processing.yolo import YOLOWorker
-from visionflow.processing.ocr import OCRWorker
-from visionflow.processing.pool import WorkerPool
-
-# Create workers
-yolo = YOLOWorker("detector", model="yolov8m.pt")
-ocr = OCRWorker("ocr", engine="tesseract")
-
-# Use in pool for parallel processing
-pool = WorkerPool([yolo, ocr])
-
-# Process frames
-await pool.initialize()
-results = await pool.process_frame(frame)
-await pool.cleanup()
-```
-
-For complete API documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-
-## Examples
-
-VisionFlow includes complete example implementations:
-
-- [basic_detection.py](tests/examples/basic_detection.py) - YOLO detection with event handling
-- [multi_source_api.py](tests/examples/multi_source_api.py) - Multiple sources with REST API
-- [custom_handlers.py](tests/examples/custom_handlers.py) - Custom event filtering and tracking
-
-Run examples:
-
-```bash
-python tests/examples/basic_detection.py
-python tests/examples/multi_source_api.py
-```
-
-## Extensibility
-
-VisionFlow is designed to be easily extended with custom sources, workers, and outputs.
-
-### Custom Source
-
-Implement a custom video source by inheriting from `BaseSource`:
+#### Custom Source
 
 ```python
 from visionflow.ingestion.base import BaseSource
 
-class WebcamSource(BaseSource):
-    """Custom webcam source using OpenCV."""
+class CustomVideoSource(BaseSource):
+    """Custom video source implementation."""
     
-    async def connect(self):
-        """Initialize camera connection."""
-        self.cap = cv2.VideoCapture(0)
-        if not self.cap.isOpened():
-            raise RuntimeError("Failed to open camera")
+    async def connect(self) -> None:
+        """Initialize connection."""
+        # Setup code here
+        pass
     
-    async def disconnect(self):
-        """Close camera connection."""
-        if self.cap:
-            self.cap.release()
+    async def disconnect(self) -> None:
+        """Cleanup connection."""
+        pass
     
-    async def read_frame(self):
+    async def read_frame(self) -> Optional[Any]:
         """Read and return next frame."""
-        ret, frame = self.cap.read()
-        return frame if ret else None
+        # Return frame or None
+        pass
 ```
 
-### Custom Worker
-
-Implement a custom AI model by inheriting from `BaseWorker`:
+#### Custom Worker
 
 ```python
 from visionflow.processing.base import BaseWorker
 
-class CustomModelWorker(BaseWorker):
-    """Custom ML model worker."""
+class CustomAIWorker(BaseWorker):
+    """Custom AI model worker."""
     
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Load model on startup."""
-        self.model = load_custom_model("model.pt")
+        self.model = load_model("model.pt")
     
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Cleanup on shutdown."""
         if hasattr(self, 'model'):
             del self.model
     
-    async def process_frame(self, frame):
+    async def process_frame(self, frame: Any) -> Dict[str, Any]:
         """Run inference on frame."""
         results = self.model.predict(frame)
-        return {
-            "predictions": results,
-            "worker_id": self.worker_id
-        }
+        return {"predictions": results, "worker_id": self.worker_id}
 ```
 
-### Custom Output
-
-Implement a custom output handler by inheriting from `BaseOutput`:
+#### Custom Output
 
 ```python
 from visionflow.outputs.base import BaseOutput
+from visionflow.events import Event
 
-class DatabaseOutput(BaseOutput):
-    """Output events to database."""
+class CustomOutput(BaseOutput):
+    """Custom event output handler."""
     
-    async def start(self):
-        """Initialize database connection."""
-        self.db = connect_to_database()
+    async def start(self) -> None:
+        """Initialize output."""
         self.is_running = True
     
-    async def stop(self):
-        """Close database connection."""
-        await self.db.close()
+    async def stop(self) -> None:
+        """Cleanup output."""
         self.is_running = False
     
-    async def send_event(self, event):
-        """Write event to database."""
-        await self.db.insert("events", event.to_dict())
+    async def send_event(self, event: Event) -> None:
+        """Process and send event."""
+        if self.is_running:
+            # Handle event
+            pass
+```
+
+## Examples
+
+Complete example implementations are available in the [tests/examples/](tests/examples/) directory:
+
+- [basic_detection.py](tests/examples/basic_detection.py) – YOLO object detection with event handling
+- [multi_source_api.py](tests/examples/multi_source_api.py) – Multiple video sources with REST API
+- [custom_handlers.py](tests/examples/custom_handlers.py) – Event filtering and custom handlers
+
+Run an example:
+
+```bash
+python tests/examples/basic_detection.py
 ```
 
 ## Testing
 
-VisionFlow includes comprehensive test coverage for all core components.
+VisionFlow includes comprehensive test coverage across all core components.
 
 ### Run Tests
 
@@ -393,41 +355,48 @@ pytest tests/ --cov=visionflow --cov-report=html
 # Run specific test file
 pytest tests/test_events.py -v
 
-# Run with detailed output
-pytest tests/ -v -s --tb=short
+# Run with detailed output and stop on first failure
+pytest tests/ -vvs -x
 ```
 
 ### Test Structure
 
-- `tests/test_events.py` - Event system and pub/sub tests
-- `tests/test_pipeline.py` - Pipeline integration tests  
-- `tests/test_yolo.py` - YOLO worker tests
-- `tests/debug_file_source.py` - Video source debugging
-- `tests/examples/` - Working examples and demonstrations
+```
+tests/
+├── test_config.py      # Configuration validation
+├── test_events.py      # Event system and pub/sub
+├── test_pipeline.py    # Pipeline integration tests
+├── test_sources.py     # Video source tests
+├── test_workers.py     # AI worker tests
+├── test_outputs.py     # Output handler tests
+└── examples/           # Working example implementations
+```
+
+Current test coverage: **105+ tests** with high reliability.
 
 ## Development
 
-### Setup Development Environment
+### Setting Up Development Environment
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/visionflow.git
+git clone https://github.com/FaisalAhmedBijoy/visionflow.git
 cd visionflow
 
-# Create virtual environment
+# Create virtual environment (Python 3.10+)
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install in development mode
+# Install in development mode with all dependencies
 pip install -e ".[dev,yolo,ocr,kafka]"
 ```
 
-### Code Quality
+### Code Quality Standards
 
-We maintain high code quality standards:
+VisionFlow maintains strict code quality standards:
 
 ```bash
-# Format code with black
+# Format code with Black
 black visionflow/ tests/
 
 # Sort imports with isort
@@ -436,112 +405,173 @@ isort visionflow/ tests/
 # Lint with flake8
 flake8 visionflow/ tests/ --max-line-length=100
 
-# Type checking with mypy
+# Type check with mypy
 mypy visionflow/ --strict
 
-# Run all checks
+# Run all quality checks
 make check
+
+# Run development setup
+python setup_dev.py
 ```
 
-### Make Commands
+### Make Targets
 
 ```bash
-make test          # Run tests
-make check         # Run linting, type checking, formatting
-make format        # Format code with black and isort
-make clean         # Clean build artifacts
-make help          # Show all available commands
+make test       # Run test suite
+make check      # Run all linting and type checks
+make format     # Format code with black and isort
+make clean      # Remove build artifacts
+make help       # Show all available commands
 ```
 
 ## Documentation
 
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - Detailed design and components
-- **[Architecture Diagrams](docs/ARCHITECTURE_DIAGRAM.md)** - System diagrams and data flows
-- **[Project Index](docs/INDEX.md)** - Complete file and API reference
-- **[Quick Start](QUICKSTART.md)** - Quick reference guide
-- **[Contributing](CONTRIBUTING.md)** - Contribution guidelines
+Complete documentation is available in the [docs/](docs/) directory:
+
+- **[Architecture Guide](docs/ARCHITECTURE.md)** – Detailed design and component architecture
+- **[Architecture Diagrams](docs/ARCHITECTURE_DIAGRAM.md)** – Visual system diagrams
+- **[API Reference](docs/INDEX.md)** – Complete API documentation
+- **[Quick Reference](QUICKSTART.md)** – Quick start examples
+- **[Contributing Guide](CONTRIBUTING.md)** – Contribution guidelines
+- **[Publishing Guide](docs/PUBLISHING.md)** – PyPI publishing instructions
 
 ## Project Structure
 
 ```
-visionflow/                 # Main package
-├── core/                   # Pipeline orchestrator
-├── events/                 # Event system (Event, EventEngine, EventGenerator)
-├── ingestion/              # Video sources (BaseSource, RTSP, File)
-├── processing/             # AI workers (BaseWorker, YOLO, OCR, Pool)
-├── outputs/                # Output handlers (REST API, WebSocket, Kafka, Logging)
-├── config/                 # Configuration management (YAML + Pydantic)
-├── cli/                    # Command-line interface
-├── utils/                  # Utility functions and helpers
-├── __init__.py             # Package exports
-└── py.typed                # PEP 561 type marker
+visionflow/                      # Main package
+├── core/                        # Pipeline orchestrator and core logic
+├── events/                      # Event system (Event, EventEngine, EventGenerator)
+├── ingestion/                   # Video sources (BaseSource, RTSP, File, Webcam)
+├── processing/                  # AI workers (BaseWorker, YOLO, OCR, WorkerPool)
+├── outputs/                     # Output handlers (REST API, WebSocket, Kafka, File, Log)
+├── config/                      # Configuration management (YAML + Pydantic)
+├── cli/                         # Command-line interface
+├── utils/                       # Utilities and helpers
+└── py.typed                     # PEP 561 type marker for mypy
 
-tests/                      # Test suite
-├── test_events.py          # Event system tests
-├── test_pipeline.py        # Pipeline integration tests
-├── test_yolo.py            # YOLO worker tests
-├── debug_file_source.py    # Source debugging
-└── examples/               # Example implementations
+tests/                           # Comprehensive test suite
+├── test_config.py               # Configuration tests
+├── test_events.py               # Event system tests
+├── test_pipeline.py             # Pipeline integration tests
+├── test_sources.py              # Source/ingestion tests
+├── test_workers.py              # Worker/processing tests
+├── test_outputs.py              # Output handler tests
+└── examples/                    # Example implementations
 
-docs/                       # Documentation
-├── ARCHITECTURE.md         # Architecture guide
-├── ARCHITECTURE_DIAGRAM.md # System diagrams
-├── INDEX.md                # Complete reference
-├── PROJECT_SUMMARY.md      # Project overview
-└── CODE_CORRECTIONS.md     # Quality metrics
+docs/                            # Documentation
+├── ARCHITECTURE.md              # Architecture and design
+├── ARCHITECTURE_DIAGRAM.md      # System diagrams
+├── INDEX.md                     # API reference
+├── PROJECT_SUMMARY.md           # Project overview
+├── PUBLISHING.md                # Publishing guide
+└── CODE_CORRECTIONS.md          # Quality metrics
 ```
 
 ## Requirements
 
-- **Python**: 3.10 or higher
-- **Dependencies**: See [pyproject.toml](pyproject.toml) for complete list
+- **Python:** 3.10 or higher
+- **OS:** Linux, macOS, or Windows
 
 ### Core Dependencies
-- `opencv-python` - Video processing
-- `fastapi` & `uvicorn` - REST API
-- `pydantic` - Configuration validation
-- `numpy` - Array operations
-- `aiofiles` - Async file I/O
+
+| Package | Purpose | Version |
+|---------|---------|---------|
+| opencv-python | Video processing | ≥4.8.0 |
+| fastapi | REST API framework | ≥0.104.0 |
+| pydantic | Configuration validation | ≥2.4.0 |
+| numpy | Numerical operations | ≥1.24.0 |
+| aiofiles | Async file I/O | ≥23.2.0 |
 
 ### Optional Dependencies
-- `ultralytics` - YOLO models
-- `pytesseract` & `pillow` - OCR support
-- `kafka-python` - Kafka integration
+
+| Package | Purpose | Install |
+|---------|---------|---------|
+| ultralytics | YOLO models | `pip install visionflow-ai[yolo]` |
+| pytesseract | OCR support | `pip install visionflow-ai[ocr]` |
+| kafka-python | Kafka integration | `pip install visionflow-ai[kafka]` |
+| paho-mqtt | MQTT integration | `pip install visionflow-ai[mqtt]` |
+
+See [pyproject.toml](pyproject.toml) for complete dependency list.
 
 ## Performance
 
-VisionFlow is designed for high performance:
+VisionFlow is optimized for production use:
 
-- **Async throughout**: Non-blocking I/O for responsiveness
-- **Parallel processing**: Concurrent worker execution
-- **Efficient memory usage**: Smart frame and event handling
-- **Production-ready**: Tested at scale with real video streams
+- **Async I/O** – Non-blocking operations throughout
+- **Parallel Processing** – Concurrent worker execution
+- **Memory Efficient** – Smart frame and event buffering
+- **Low Latency** – Optimized for real-time applications
+- **Scalable** – Handles multiple streams simultaneously
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+We welcome contributions from the community! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
 - Code of conduct
-- Development setup
+- Development setup guide
 - Pull request process
-- Code standards
+- Code style and standards
 - Testing requirements
+- Documentation guidelines
+
+### Quick Contribution Steps
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make your changes and add tests
+4. Run quality checks: `make check`
+5. Commit with clear messages: `git commit -m "Add my feature"`
+6. Push to your fork: `git push origin feature/my-feature`
+7. Open a pull request with description
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) file for details.
+Licensed under the Apache License 2.0. See [LICENSE](LICENSE) file for full details.
 
-## Support
+```
+Copyright 2024-2026 VisionFlow Contributors
 
-- **Documentation**: See [docs/](docs/) directory
-- **Issues**: GitHub Issues for bug reports and features
-- **Email**: For direct support inquiries
-- **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md)
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+## Support & Community
+
+- **Documentation:** [docs/](docs/) directory
+- **Bug Reports:** [GitHub Issues](https://github.com/FaisalAhmedBijoy/visionflow/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/FaisalAhmedBijoy/visionflow/discussions)
+- **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Acknowledgments
 
-VisionFlow is built on top of excellent open-source projects:
-- [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for object detection
-- [FastAPI](https://fastapi.tiangolo.com/) for REST API
-- [Tesseract OCR](https://github.com/UB-Mannheim/tesseract) for text recognition
-- [Pydantic](https://docs.pydantic.dev/) for configuration management
+VisionFlow builds on excellent open-source projects:
+
+- [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) – Object detection models
+- [FastAPI](https://fastapi.tiangolo.com/) – Web framework
+- [Pydantic](https://docs.pydantic.dev/) – Data validation
+- [OpenCV](https://opencv.org/) – Computer vision library
+- [Tesseract OCR](https://github.com/UB-Mannheim/tesseract) – Text recognition
+
+## Citation
+
+If you use VisionFlow in your research or project, please cite:
+
+```bibtex
+@software{visionflow2024,
+  author = {VisionFlow Contributors},
+  title = {VisionFlow: Event-driven Real-time AI Video Processing},
+  year = {2024},
+  url = {https://github.com/FaisalAhmedBijoy/visionflow}
+}
+```
 

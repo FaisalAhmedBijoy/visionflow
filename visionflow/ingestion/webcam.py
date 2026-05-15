@@ -13,9 +13,7 @@ import numpy as np
 try:
     import cv2
 except ImportError:
-    raise ImportError(
-        "opencv-python is required. Install with: pip install opencv-python"
-    )
+    raise ImportError("opencv-python is required. Install with: pip install opencv-python")
 
 from visionflow.ingestion.base import BaseSource
 

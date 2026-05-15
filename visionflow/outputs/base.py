@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from visionflow.events.event import Event
@@ -35,12 +35,10 @@ class BaseOutput(ABC):
     @abstractmethod
     async def start(self) -> None:
         """Start the output handler (e.g., start server, connect to Kafka)."""
-        pass
 
     @abstractmethod
     async def stop(self) -> None:
         """Stop the output handler."""
-        pass
 
     @abstractmethod
     async def send_event(self, event: Event) -> None:
@@ -50,4 +48,3 @@ class BaseOutput(ABC):
         Args:
             event: Event to send
         """
-        pass

@@ -5,10 +5,8 @@ Tests for VisionFlow configuration loading and validation.
 from __future__ import annotations
 
 import tempfile
-from pathlib import Path
 
 import pytest
-import yaml
 
 from visionflow.config.config import (
     OutputConfig,
@@ -18,7 +16,6 @@ from visionflow.config.config import (
     load_config,
     save_config,
 )
-
 
 MINIMAL_YAML = """
 name: Test Pipeline

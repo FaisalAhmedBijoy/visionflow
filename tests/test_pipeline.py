@@ -2,14 +2,11 @@
 Integration tests for VisionFlow pipeline.
 """
 
-import asyncio
-
 import pytest
 
 from visionflow.core.pipeline import StreamPipeline
 from visionflow.events.event import Event
 from visionflow.outputs.log import LogOutput
-from visionflow.processing.pool import WorkerPool
 
 
 class TestStreamPipeline:

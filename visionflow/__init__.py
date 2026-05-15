@@ -31,8 +31,8 @@ __author__ = "VisionFlow Contributors"
 __license__ = "Apache-2.0"
 
 from visionflow.core.pipeline import StreamPipeline
-from visionflow.events.event import Event
 from visionflow.events.engine import EventEngine
+from visionflow.events.event import Event
 from visionflow.events.generator import EventGenerator
 from visionflow.processing.middleware import ConfidenceFilter, EventMiddleware
 from visionflow.utils.metrics import PipelineMetrics

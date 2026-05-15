@@ -14,8 +14,9 @@ from typing import Any, List
 import click
 
 from visionflow import __version__
-from visionflow.config.config import load_config, PipelineConfig
+from visionflow.config.config import PipelineConfig, load_config
 from visionflow.core.pipeline import StreamPipeline
+from visionflow.ingestion.base import BaseSource
 from visionflow.ingestion.file import FileSource
 from visionflow.ingestion.rtsp import RTSPSource
 from visionflow.ingestion.webcam import WebcamSource
@@ -40,6 +41,7 @@ logger = logging.getLogger(__name__)
 # CLI Group
 # ------------------------------------------------------------------ #
 
+
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx: click.Context) -> None:
@@ -51,6 +53,7 @@ def cli(ctx: click.Context) -> None:
 # ------------------------------------------------------------------ #
 # visionflow run
 # ------------------------------------------------------------------ #
+
 
 @cli.command()
 @click.argument("config_file", type=click.Path(exists=True, path_type=Path))
@@ -75,9 +78,7 @@ def run(config_file: Path, debug: bool, log_file: Path | None) -> None:
 
     if log_file is not None:
         fh = logging.FileHandler(log_file)
-        fh.setFormatter(
-            logging.Formatter("%(asctime)s [%(levelname)s] %(name)s — %(message)s")
-        )
+        fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s — %(message)s"))
         logging.getLogger().addHandler(fh)
 
     try:
@@ -101,6 +102,7 @@ def _build_pipeline(config: PipelineConfig) -> StreamPipeline:
 
     # ---- Sources ----
     for sc in config.sources:
+        source: BaseSource
         if sc.type == "rtsp":
             source = RTSPSource(sc.url, sc.id, sc.fps)
         elif sc.type == "file":
@@ -197,6 +199,7 @@ def _build_pipeline(config: PipelineConfig) -> StreamPipeline:
 # visionflow init
 # ------------------------------------------------------------------ #
 
+
 @cli.command()
 @click.argument("output_file", type=click.Path(path_type=Path))
 @click.option("--name", default="VisionFlow Pipeline", help="Pipeline name")
@@ -220,12 +223,22 @@ def init(output_file: Path, name: str, template: str) -> None:
     Example:
         visionflow init config.yaml --template yolo
     """
-    from visionflow.config.config import OutputConfig, PipelineConfig, SourceConfig, WorkerConfig, save_config
+    from visionflow.config.config import (
+        OutputConfig,
+        PipelineConfig,
+        SourceConfig,
+        WorkerConfig,
+        save_config,
+    )
 
     if template == "yolo":
         config = PipelineConfig(
             name=name,
-            sources=[SourceConfig(id="camera_1", type="rtsp", url="rtsp://camera.example.com/stream", fps=25)],
+            sources=[
+                SourceConfig(
+                    id="camera_1", type="rtsp", url="rtsp://camera.example.com/stream", fps=25
+                )
+            ],
             workers=[WorkerConfig(id="detector", type="yolo", model="yolov8n.pt")],
             outputs=[
                 OutputConfig(id="logger", type="log"),
@@ -251,7 +264,9 @@ def init(output_file: Path, name: str, template: str) -> None:
     else:  # basic
         config = PipelineConfig(
             name=name,
-            sources=[SourceConfig(id="camera_1", type="rtsp", url="rtsp://camera.example.com/stream")],
+            sources=[
+                SourceConfig(id="camera_1", type="rtsp", url="rtsp://camera.example.com/stream")
+            ],
             workers=[],
             outputs=[OutputConfig(id="logger", type="log")],
         )
@@ -264,6 +279,7 @@ def init(output_file: Path, name: str, template: str) -> None:
 # ------------------------------------------------------------------ #
 # visionflow validate
 # ------------------------------------------------------------------ #
+
 
 @cli.command()
 @click.argument("config_file", type=click.Path(exists=True, path_type=Path))
@@ -291,6 +307,7 @@ def validate(config_file: Path) -> None:
 # visionflow info
 # ------------------------------------------------------------------ #
 
+
 @cli.command()
 def info() -> None:
     """Show VisionFlow environment and dependency information."""
@@ -310,7 +327,16 @@ def info() -> None:
     click.echo(f"  Platform    : {platform.system()} {platform.machine()}")
     click.echo("")
     click.echo("  Dependencies:")
-    for pkg in ["cv2", "numpy", "fastapi", "pydantic", "ultralytics", "pytesseract", "kafka", "paho"]:
+    for pkg in [
+        "cv2",
+        "numpy",
+        "fastapi",
+        "pydantic",
+        "ultralytics",
+        "pytesseract",
+        "kafka",
+        "paho",
+    ]:
         click.echo(f"    {pkg:<16}: {_check(pkg)}")
     click.echo("")
 
@@ -318,6 +344,7 @@ def info() -> None:
 # ------------------------------------------------------------------ #
 # visionflow version
 # ------------------------------------------------------------------ #
+
 
 @cli.command()
 def version() -> None:
@@ -328,6 +355,7 @@ def version() -> None:
 # ------------------------------------------------------------------ #
 # Entry point
 # ------------------------------------------------------------------ #
+
 
 def main() -> None:
     """Main CLI entry point."""

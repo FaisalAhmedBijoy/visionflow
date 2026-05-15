@@ -4,13 +4,12 @@ Base worker class for frame processing.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:
-    import numpy as np
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +37,10 @@ class BaseWorker(ABC):
     @abstractmethod
     async def initialize(self) -> None:
         """Initialize and load the model."""
-        pass
 
     @abstractmethod
     async def cleanup(self) -> None:
         """Clean up resources (unload model, etc.)."""
-        pass
 
     @abstractmethod
     async def process_frame(self, frame: Any) -> Dict[str, Any]:
@@ -56,7 +53,6 @@ class BaseWorker(ABC):
         Returns:
             Dictionary with inference results
         """
-        pass
 
     async def start(self) -> None:
         """Start the worker."""

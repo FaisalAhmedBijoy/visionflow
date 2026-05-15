@@ -13,9 +13,7 @@ import numpy as np
 try:
     import cv2
 except ImportError:
-    raise ImportError(
-        "opencv-python is required. Install with: pip install opencv-python"
-    )
+    raise ImportError("opencv-python is required. Install with: pip install opencv-python")
 
 from visionflow.ingestion.base import BaseSource
 
@@ -102,9 +100,7 @@ class RTSPSource(BaseSource):
         ret, frame = self._cap.read()
 
         if not ret:
-            self._logger.warning(
-                f"Failed to read frame from RTSP stream: {self.rtsp_url}"
-            )
+            self._logger.warning(f"Failed to read frame from RTSP stream: {self.rtsp_url}")
             return await self._attempt_reconnect()
 
         # Frame-rate throttle

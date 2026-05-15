@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
 from visionflow.utils.metrics import PipelineMetrics, WorkerMetrics
 
 

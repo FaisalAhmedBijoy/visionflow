@@ -81,9 +81,7 @@ class EventMiddleware:
             try:
                 current = await fn(current)
             except Exception as e:
-                logger.error(
-                    f"Exception in middleware {fn.__name__!r}: {e}", exc_info=True
-                )
+                logger.error(f"Exception in middleware {fn.__name__!r}: {e}", exc_info=True)
                 return None
         return current
 

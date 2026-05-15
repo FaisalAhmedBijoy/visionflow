@@ -4,10 +4,8 @@ Tests for VisionFlow video source ingestion.
 
 from __future__ import annotations
 
-import asyncio
-from pathlib import Path
 from typing import Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -16,10 +14,10 @@ from visionflow.ingestion.base import BaseSource
 from visionflow.ingestion.file import FileSource
 from visionflow.ingestion.webcam import WebcamSource
 
-
 # ------------------------------------------------------------------ #
 # Concrete stub for BaseSource (abstract class)
 # ------------------------------------------------------------------ #
+
 
 class _StubSource(BaseSource):
     """Minimal concrete implementation of BaseSource for testing."""
@@ -41,6 +39,7 @@ class _StubSource(BaseSource):
 # ------------------------------------------------------------------ #
 # BaseSource tests
 # ------------------------------------------------------------------ #
+
 
 class TestBaseSource:
     """Tests for the BaseSource lifecycle."""
@@ -89,6 +88,7 @@ class TestBaseSource:
 # FileSource tests
 # ------------------------------------------------------------------ #
 
+
 class TestFileSource:
     """Tests for FileSource using a mocked OpenCV VideoCapture."""
 
@@ -102,7 +102,10 @@ class TestFileSource:
         cap = MagicMock()
         cap.isOpened.return_value = is_opened
         cap.get.return_value = fps
-        cap.read.return_value = (read_success, frame if frame is not None else np.zeros((480, 640, 3), dtype=np.uint8))
+        cap.read.return_value = (
+            read_success,
+            frame if frame is not None else np.zeros((480, 640, 3), dtype=np.uint8),
+        )
         return cap
 
     def test_default_source_id_is_file_path(self) -> None:
@@ -167,6 +170,7 @@ class TestFileSource:
 # ------------------------------------------------------------------ #
 # WebcamSource tests
 # ------------------------------------------------------------------ #
+
 
 class TestWebcamSource:
     """Tests for WebcamSource using a mocked VideoCapture."""

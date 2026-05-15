@@ -6,8 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
-from typing import TYPE_CHECKING, Any, Dict, Optional, Set
+from typing import TYPE_CHECKING, Any, Set
 
 from visionflow.outputs.base import BaseOutput
 

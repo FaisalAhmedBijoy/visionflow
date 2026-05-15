@@ -4,7 +4,6 @@ Base source class for video stream ingestion.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -12,7 +11,6 @@ from typing import Optional
 import numpy as np
 
 logger = logging.getLogger(__name__)
-
 
 
 class BaseSource(ABC):
@@ -38,12 +36,10 @@ class BaseSource(ABC):
     @abstractmethod
     async def connect(self) -> None:
         """Connect to the source (open stream, file, etc.)."""
-        pass
 
     @abstractmethod
     async def disconnect(self) -> None:
         """Disconnect from the source."""
-        pass
 
     @abstractmethod
     async def read_frame(self) -> Optional[np.ndarray]:
@@ -53,7 +49,6 @@ class BaseSource(ABC):
         Returns:
             Frame as numpy array (BGR format) or None if stream ended
         """
-        pass
 
     async def start(self) -> None:
         """Start the source."""

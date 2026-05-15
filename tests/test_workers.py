@@ -157,7 +157,7 @@ class TestEventMiddleware:
         mw = EventMiddleware()
 
         @mw.use
-        async def tag(event: Event):
+        async def add_tag(event: Event) -> Event:
             event.metadata["tagged"] = True
             return event
 
@@ -169,7 +169,7 @@ class TestEventMiddleware:
         mw = EventMiddleware()
 
         @mw.use
-        async def drop(event: Event):
+        async def drop(event: Event) -> None:
             return None
 
         assert await mw.process(sample_event) is None
@@ -179,7 +179,7 @@ class TestEventMiddleware:
         mw = EventMiddleware()
 
         @mw.use
-        async def boom(event: Event):
+        async def boom(event: Event) -> None:
             raise ValueError("crash")
 
         assert await mw.process(sample_event) is None

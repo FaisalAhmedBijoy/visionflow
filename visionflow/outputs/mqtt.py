@@ -100,6 +100,7 @@ class MQTTOutput(BaseOutput):
             self._client.on_connect = self._on_connect
             self._client.on_disconnect = self._on_disconnect
 
+            assert self._client is not None
             # Connect in a thread to avoid blocking the event loop
             await self._loop.run_in_executor(
                 None,
@@ -144,6 +145,7 @@ class MQTTOutput(BaseOutput):
         payload = json.dumps(event.to_dict(), default=str)
 
         try:
+            assert self._client is not None
             await self._loop.run_in_executor(
                 None,
                 lambda: self._client.publish(topic, payload, qos=self.qos),

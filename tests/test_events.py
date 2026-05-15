@@ -2,10 +2,8 @@
 Tests for VisionFlow event system.
 """
 
-import asyncio
-from datetime import datetime
-
 import pytest
+from typing import Any
 
 from visionflow.events.engine import EventEngine
 from visionflow.events.event import Event
@@ -195,7 +193,7 @@ class TestEventGenerator:
         """Test registering custom generator."""
         generator = EventGenerator()
 
-        def custom_gen(data: dict[str, object], source_id: str) -> list[Event]:
+        def custom_gen(data: dict[str, Any], source_id: str) -> list[Event]:
             # Generate one event per item
             return [
                 Event(event_type="item_detected", source_id=source_id, data={"item": item})

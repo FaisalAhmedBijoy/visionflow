@@ -107,9 +107,7 @@ class StreamPipeline:
 
     def on_event(
         self, event_type: str
-    ) -> Callable[
-        [Callable[["Event"], Awaitable[None]]], Callable[["Event"], Awaitable[None]]
-    ]:
+    ) -> Callable[[Callable[["Event"], Awaitable[None]]], Callable[["Event"], Awaitable[None]]]:
         """
         Decorator — register a persistent async event handler.
 
@@ -135,9 +133,7 @@ class StreamPipeline:
 
     def once_event(
         self, event_type: str
-    ) -> Callable[
-        [Callable[["Event"], Awaitable[None]]], Callable[["Event"], Awaitable[None]]
-    ]:
+    ) -> Callable[[Callable[["Event"], Awaitable[None]]], Callable[["Event"], Awaitable[None]]]:
         """
         Decorator — register a one-time event handler (auto-removed after first call).
 
@@ -251,10 +247,7 @@ class StreamPipeline:
         await self.start()
 
         try:
-            self._tasks = [
-                asyncio.create_task(self._run_source(source))
-                for source in self.sources
-            ]
+            self._tasks = [asyncio.create_task(self._run_source(source)) for source in self.sources]
 
             if self._tasks:
                 await asyncio.gather(*self._tasks, return_exceptions=True)
@@ -355,17 +348,14 @@ class StreamPipeline:
             "name": self.name,
             "status": "running" if self.is_running else "stopped",
             "uptime_seconds": round(uptime, 1) if uptime is not None else None,
-            "sources": [
-                {"id": s.source_id, "running": s.is_running} for s in self.sources
-            ],
+            "sources": [{"id": s.source_id, "running": s.is_running} for s in self.sources],
             "workers": (
                 [{"id": w.worker_id, "running": w.is_running} for w in self.worker_pool.workers]
                 if self.worker_pool
                 else []
             ),
             "outputs": [
-                {"id": o.output_id, "running": o.is_running}
-                for o in self.output_dispatcher.outputs
+                {"id": o.output_id, "running": o.is_running} for o in self.output_dispatcher.outputs
             ],
             "middleware_steps": self.middleware.length,
             "metrics": self.metrics.snapshot(),

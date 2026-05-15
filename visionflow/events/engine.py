@@ -80,9 +80,7 @@ class EventEngine:
             handler: Handler to remove
         """
         if event_type in self._handlers:
-            self._handlers[event_type] = [
-                h for h in self._handlers[event_type] if h != handler
-            ]
+            self._handlers[event_type] = [h for h in self._handlers[event_type] if h != handler]
             logger.debug(f"Handler removed for event type: {event_type!r}")
 
     async def emit(self, event: "Event") -> None:

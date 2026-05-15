@@ -41,7 +41,7 @@ class YOLOWorker(BaseWorker):
     async def initialize(self) -> None:
         """Load YOLO model into memory."""
         try:
-            from ultralytics import YOLO
+            from ultralytics import YOLO  # type: ignore
 
             self._model = YOLO(self.model_name)
             self._logger.info(f"YOLO model loaded: {self.model_name}")
@@ -77,9 +77,7 @@ class YOLOWorker(BaseWorker):
             RuntimeError: If model has not been initialized via start()
         """
         if self._model is None:
-            raise RuntimeError(
-                f"Worker '{self.worker_id}' is not initialized. Call start() first."
-            )
+            raise RuntimeError(f"Worker '{self.worker_id}' is not initialized. Call start() first.")
 
         try:
             results = self._model(frame, verbose=False)

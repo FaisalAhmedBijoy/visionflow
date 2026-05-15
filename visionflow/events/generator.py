@@ -4,7 +4,7 @@ Event generator for converting inference results into events.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 from visionflow.events.event import Event
 

@@ -6,7 +6,7 @@ import asyncio
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from visionflow import StreamPipeline, Event
+from visionflow import Event, StreamPipeline
 from visionflow.ingestion import FileSource
 from visionflow.outputs.log import LogOutput
 from visionflow.processing.pool import WorkerPool
@@ -27,9 +27,7 @@ class DetectionTracker:
         self.detections[event_type].append(now)
         # Clean old entries
         cutoff = now - self.window
-        self.detections[event_type] = [
-            t for t in self.detections[event_type] if t > cutoff
-        ]
+        self.detections[event_type] = [t for t in self.detections[event_type] if t > cutoff]
 
     def count(self, event_type: str) -> int:
         """Get count in window."""

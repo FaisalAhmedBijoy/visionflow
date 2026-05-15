@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from visionflow.processing.base import BaseWorker
 
@@ -79,7 +79,7 @@ class WorkerPool:
             )
 
             # Collect results by worker ID
-            processed = {}
+            processed: dict[str, Any] = {}
             for worker, result in zip(self.workers, results):
                 if isinstance(result, Exception):
                     self._logger.error(

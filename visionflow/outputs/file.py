@@ -4,6 +4,7 @@ File-based event output handler — writes events to JSONL files with rotation.
 
 from __future__ import annotations
 
+import io
 import json
 import logging
 from datetime import datetime, timezone
@@ -55,7 +56,7 @@ class FileOutput(BaseOutput):
         self.output_path = Path(output_path)
         self.max_bytes = max_bytes
         self.encoding = encoding
-        self._file: Optional[object] = None
+        self._file: Optional[io.TextIOWrapper] = None
         self._bytes_written: int = 0
 
     async def start(self) -> None:
@@ -63,7 +64,9 @@ class FileOutput(BaseOutput):
         try:
             self.output_path.parent.mkdir(parents=True, exist_ok=True)
             self._file = self.output_path.open("a", encoding=self.encoding)
-            self._bytes_written = self.output_path.stat().st_size if self.output_path.exists() else 0
+            self._bytes_written = (
+                self.output_path.stat().st_size if self.output_path.exists() else 0
+            )
             self.is_running = True
             self._logger.info(f"FileOutput started: {self.output_path}")
         except Exception as e:

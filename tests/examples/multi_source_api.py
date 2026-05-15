@@ -18,9 +18,7 @@ async def main() -> None:
     pipeline = StreamPipeline()
 
     # Add multiple video sources
-    pipeline.add_source(
-        FileSource("parking_lot.mp4", source_id="parking_camera", fps=5)
-    )
+    pipeline.add_source(FileSource("parking_lot.mp4", source_id="parking_camera", fps=5))
     pipeline.add_source(
         RTSPSource("rtsp://traffic.camera/stream", source_id="traffic_camera", fps=10)
     )
@@ -47,7 +45,7 @@ async def main() -> None:
     print("  GET /health - Health check")
     print("  GET /events - Get recent events")
     print("  GET /events/{event_id} - Get specific event")
-    
+
     await pipeline.run()
 
 

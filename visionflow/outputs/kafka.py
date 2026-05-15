@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 from typing import TYPE_CHECKING, Any, Optional
 
 from visionflow.outputs.base import BaseOutput
@@ -79,6 +78,7 @@ class KafkaOutput(BaseOutput):
         try:
             # Send to Kafka (async wrapper)
             def _send() -> None:
+                assert self._producer is not None
                 self._producer.send(self.topic, value=event.to_dict())
                 self._producer.flush()
 

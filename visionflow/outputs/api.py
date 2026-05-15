@@ -7,7 +7,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import deque
-from typing import TYPE_CHECKING, Any, Deque, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Deque, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -111,7 +111,7 @@ class RestAPIOutput(BaseOutput):
             """
             event_list = list(self._events)
             event_list.reverse()  # newest first
-            page = event_list[offset: offset + limit]
+            page = event_list[offset : offset + limit]
             return {
                 "events": [e.to_dict() for e in page],
                 "count": len(page),
@@ -126,11 +126,7 @@ class RestAPIOutput(BaseOutput):
             limit: int = Query(default=100, ge=1, le=1000),
         ) -> Dict[str, Any]:
             """Filter buffered events by event type."""
-            matched = [
-                e.to_dict()
-                for e in self._events
-                if e.event_type == event_type
-            ]
+            matched = [e.to_dict() for e in self._events if e.event_type == event_type]
             matched.reverse()
             page = matched[:limit]
             return {"events": page, "count": len(page), "event_type": event_type}
@@ -187,9 +183,7 @@ class RestAPIOutput(BaseOutput):
             return
 
         self._events.append(event)
-        self._event_counts[event.event_type] = (
-            self._event_counts.get(event.event_type, 0) + 1
-        )
+        self._event_counts[event.event_type] = self._event_counts.get(event.event_type, 0) + 1
 
     def __repr__(self) -> str:
         return (

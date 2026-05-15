@@ -15,31 +15,12 @@ from visionflow.processing.yolo import YOLOWorker
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 
-async def main() -> None:
+async def run_basic_pipeline(video_path: str) -> None:
     """Run basic YOLO detection on video file."""
-    # Print current working directory and check video file
-    cwd = os.getcwd()
-    print(f"📁 Current working directory: {cwd}")
-    
-    video_path = "data/car-detection.mp4"
-    if Path(video_path).exists():
-        print(f"✅ Video file found: {video_path}")
-    else:
-        print(f"❌ Video file NOT found: {video_path}")
-        print(f"   Checking if file exists in absolute path...")
-        abs_path = Path(cwd) / video_path
-        if abs_path.exists():
-            print(f"   ✅ Found at: {abs_path}")
-            video_path = str(abs_path)
-        else:
-            print(f"   ❌ File not found. Please check the path.")
-            return
-    
     # Create pipeline
     pipeline = StreamPipeline()
 

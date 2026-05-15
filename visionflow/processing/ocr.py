@@ -44,7 +44,7 @@ class OCRWorker(BaseWorker):
         """Initialize the OCR engine and verify dependencies."""
         if self.engine == "tesseract":
             try:
-                import pytesseract
+                import pytesseract  # type: ignore
                 from PIL import Image
 
                 self._pytesseract = pytesseract
@@ -85,9 +85,7 @@ class OCRWorker(BaseWorker):
             RuntimeError: If worker has not been initialized via start()
         """
         if self._pytesseract is None or self._image is None:
-            raise RuntimeError(
-                f"Worker '{self.worker_id}' is not initialized. Call start() first."
-            )
+            raise RuntimeError(f"Worker '{self.worker_id}' is not initialized. Call start() first.")
 
         if self.engine == "tesseract":
             try:

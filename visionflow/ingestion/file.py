@@ -13,6 +13,8 @@ try:
 except ImportError:
     raise ImportError("opencv-python is required. Install with: pip install opencv-python")
 
+import numpy as np
+
 from visionflow.ingestion.base import BaseSource
 
 logger = logging.getLogger(__name__)
@@ -61,12 +63,12 @@ class FileSource(BaseSource):
             self._cap = None
             self._logger.info("Video file closed")
 
-    async def read_frame(self) -> Optional[object]:
+    async def read_frame(self) -> Optional[np.ndarray]:
         """
-        Read next frame from file.
+        Read the next frame from the file.
 
         Returns:
-            Frame as numpy array (BGR) or None if file ended
+            Frame as numpy array, or None if end of file.
         """
         if self._cap is None or not self._cap.isOpened():
             self._logger.debug("VideoCapture not initialized or closed")

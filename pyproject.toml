@@ -3,7 +3,7 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "visionflow"
+name = "visionflow-ai"
 version = "0.0.1"
 description = "Event-driven, real-time AI video stream processing framework"
 readme = "README.md"

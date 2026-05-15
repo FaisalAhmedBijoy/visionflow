@@ -2,8 +2,9 @@
 Tests for VisionFlow event system.
 """
 
-import pytest
 from typing import Any
+
+import pytest
 
 from visionflow.events.engine import EventEngine
 from visionflow.events.event import Event

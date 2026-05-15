@@ -38,15 +38,14 @@ Perfect for building:
 - **Production-Grade** - Comprehensive error handling, structured logging, extensive testing
 
 ### Built-In Capabilities
-- ✅ YOLO v8 object detection (nano to xlarge)
-- ✅ Tesseract OCR text recognition
-- ✅ FastAPI REST API with Swagger documentation
-- ✅ Real-time WebSocket broadcast
-- ✅ Apache Kafka message publishing
-- ✅ YAML + Pydantic configuration management
-- ✅ CLI for pipeline execution
-- ✅ Worker pool for parallel inference
-
+- YOLO v8 object detection (nano to xlarge)
+- Tesseract OCR text recognition
+- FastAPI REST API with Swagger documentation
+- Real-time WebSocket broadcast
+- Apache Kafka message publishing
+- YAML + Pydantic configuration management
+- CLI for pipeline execution
+- Worker pool for parallel inference
 ## Quick Start
 
 ### Installation
@@ -533,23 +532,10 @@ This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) f
 
 ## Support
 
-- 📖 **Documentation**: See [docs/](docs/) directory
-- 💬 **Issues**: GitHub Issues for bug reports and features
-- 📧 **Email**: For direct support inquiries
-- 🤝 **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md)
-
-## Citation
-
-If you use VisionFlow in your research or application, please cite:
-
-```bibtex
-@software{visionflow2026,
-  title={VisionFlow: Real-time AI Video Stream Processing Framework},
-  author={VisionFlow Contributors},
-  year={2026},
-  url={https://github.com/yourusername/visionflow}
-}
-```
+- **Documentation**: See [docs/](docs/) directory
+- **Issues**: GitHub Issues for bug reports and features
+- **Email**: For direct support inquiries
+- **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Acknowledgments
 
@@ -559,12 +545,3 @@ VisionFlow is built on top of excellent open-source projects:
 - [Tesseract OCR](https://github.com/UB-Mannheim/tesseract) for text recognition
 - [Pydantic](https://docs.pydantic.dev/) for configuration management
 
----
-
-<div align="center">
-
-Made with ❤️ by VisionFlow contributors
-
-[⬆ Back to top](#visionflow)
-
-</div>

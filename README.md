@@ -568,9 +568,9 @@ If you use VisionFlow in your research or project, please cite:
 
 ```bibtex
 @software{visionflow2024,
-  author = {VisionFlow Contributors},
+  author = {Faisal Ahmed},
   title = {VisionFlow: Event-driven Real-time AI Video Processing},
-  year = {2024},
+  year = {2026},
   url = {https://github.com/FaisalAhmedBijoy/visionflow}
 }
 ```
